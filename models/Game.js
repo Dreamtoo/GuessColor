@@ -1,140 +1,198 @@
 import React, { Component } from "react";
 import {
+  StyleSheet,
   Text,
   View,
   TouchableOpacity
 } from "react-native";
-import { GameStyles } from "./../styles";
+import update from "immutability-helper";
+import { margins, fontSizes, colors as baseColors, rainbowColors, mergeRules } from "./../styles/base";
+import GameStyles from "./../styles/game";
 
-const MAX_CHOICES_ROW = 9;
-
-const ChooseRow = (props) => {
-  return (
-    <View style={[GameStyles.sideTopInnerRow, GameStyles.chooseRow]} {...props}>
-      {props.children}
-    </View >
-  );
-};
-const ChooseCol = (props) => {
-  return (
-    <View style={GameStyles.chooseCol} {...props}>
-      {props.children}
-    </View>
-  );
-};
-const ChoiceItem = (props) => {
-  return (
-    <TouchableOpacity style={GameStyles.chooseCol} {...props}>
-      {props.children}
-    </TouchableOpacity>
-  );
-};
+const MAX_CHOICES = 7;
+const MAX_CHOOSES = 9;
 
 export default class Game extends Component {
   constructor(props) {
     super(props);
 
-    this.choices = [];
-    this.chooses = [];
     this.answers = [];
     this.row = 0;
     this.col = 0;
+    this.state = {
+      chooses: (new Array(MAX_CHOOSES)).fill(
+        (new Array(props.game.level)).fill("black")
+      ),
+    };
+  }
+
+  choose = (color) => {
+    const { game } = this.props;
+    const chooses = update(this.state.chooses, {
+      [this.row]: {
+        [this.col]: { $set: color },
+      },
+    });
+    this.setState({ chooses: chooses });
+
+    // Update the chooses pointer.
+    this.col += 1;
+
+    if (this.col === game.level) {
+      this.row += 1;
+      this.col = 0;
+    }
+
+    // Reset the chooses pointer.
+    if (this.row === MAX_CHOOSES) {
+      this.row = 0;
+      this.col = 0;
+
+      // Show the answers.
+    }
   }
 
   renderChoices() {
     const { game } = this.props;
-    let choices = [];
-    let i;
 
-    for (i = 0; i < MAX_CHOICES_ROW; i++) {
-      choices.push(
-        <ChoiceItem key={`chooces-${i}`} style={GameStyles.chooseCol} />
+    const { width } = mergeRules(GameStyles.sideChoice);
+    const itemSize = (width / MAX_CHOICES) - margins.md;
+    const itemStyle = {
+      width: itemSize,
+      height: itemSize,
+      borderRadius: itemSize * 0.5,
+    };
+
+    return Object.keys(rainbowColors).map(color => {
+      const customStyle = {
+        ...itemStyle,
+        backgroundColor: rainbowColors[color],
+      };
+
+      return (
+        <TouchableOpacity
+          key={`choice-${color}`}
+          style={[GameStyles.choiceItem, customStyle]}
+          onPress={() => this.choose(color)}
+        />
       );
-    }
-
-    return choices;
+    });
   }
 
   renderChooses() {
     const { game } = this.props;
-    let choices = [];
-    let cols, i, j;
 
-    for (i = 0; i < MAX_CHOICES_ROW; i++) {
-      cols = [];
+    const { width, height } = mergeRules(GameStyles.sideChoose);
+    const containerStyle = {
+      height: height / MAX_CHOOSES,
+    };
+    const itemSize = Math.min(width / game.level, containerStyle.height) - margins.md;
+    const itemStyle = {
+      width: itemSize,
+      height: itemSize,
+      borderRadius: itemSize * 0.5,
+    };
+    const textStyle = {
+      fontSize: itemSize * 0.48,
+      color: baseColors.white,
+    };
 
-      for (j = 0; j < game.level; j++) {
-        cols.push(
-          <ChooseCol key={`chooses-${i}-${j}`} style={GameStyles.chooseCol} />
-        );
-      }
+    // let chooses = [];
+    // let items, i, j;
 
-      choices.push(
-        <ChooseRow key={i} style={[GameStyles.sideTopInnerRow, GameStyles.chooseRow]}>
-          {cols}
-        </ChooseRow >
-      );
-    }
 
-    return choices;
+    // for (i = 0; i < MAX_CHOOSES; i++) {
+    //   state.chooses.push([]);
+    //   items = [];
+
+    //   for (j = 0; j < game.level; j++) {
+    //     items.push(
+    //       <View key={`choose-${i}-${j}`} style={[GameStyles.chooseItem, itemStyle]}>
+    //         <Text style={textStyle}>?</Text>
+    //       </View>
+    //     );
+    //   }
+
+    //   chooses.push(
+    //     <View key={`choose-${i}`} style={[GameStyles.chooseContainer, containerStyle]}>
+    //       {items}
+    //     </View>
+    //   );
+    // }
+
+    return this.state.chooses.map((items, i) => (
+      <View key={`choose-${i}`} style={[GameStyles.chooseContainer, containerStyle]}>
+        {
+          items.map((item, j) => {
+            const customStyle = {
+              ...itemStyle,
+              backgroundColor: baseColors[item],
+            };
+
+            return (
+              <View key={`choose-${i}-${j}`} style={[GameStyles.chooseItem, customStyle]}>
+                <Text style={textStyle}>?</Text>
+              </View>
+            );
+          })
+        }
+      </View>
+    ));
   }
 
-  renderHints() {
-    const { game } = this.props;
-    let hints = [];
-    let cols, i, j;
+  // renderHints() {
+  //   const { game } = this.props;
+  //   let hints = [];
+  //   let cols, i, j;
 
-    for (i = 0; i < MAX_CHOICES_ROW; i++) {
-      cols = [];
+  //   for (i = 0; i < MAX_CHOICES_ROW; i++) {
+  //     cols = [];
 
-      for (j = 0; j < 5; j++) {
-        cols.push(
-          <ChooseCol key={`hints-${i}-${j}`} style={GameStyles.hintCol} />
-        );
-      }
+  //     for (j = 0; j < 5; j++) {
+  //       cols.push(
+  //         <ChooseCol key={`hints-${i}-${j}`} style={GameStyles.hintCol} />
+  //       );
+  //     }
 
-      hints.push(
-        <ChooseRow key={i} style={[GameStyles.sideTopInnerRow, GameStyles.hintRow]}>
-          {cols}
-        </ChooseRow >
-      );
-    }
+  //     hints.push(
+  //       <ChooseRow key={i} style={[GameStyles.sideTopInnerRow, GameStyles.hintRow]}>
+  //         {cols}
+  //       </ChooseRow >
+  //     );
+  //   }
 
-    return hints;
-  }
+  //   return hints;
+  // }
 
   render() {
     return (
-      // BEGIN: Container
-      <View style={[GameStyles.container]}>
-        {/* BEGIN: Sidenav top */}
-        <View style={[GameStyles.side, GameStyles.sideTop]}>
-          {/* BEGIN: Chooses */}
-          <View style={[GameStyles.sideTopInner, GameStyles.sideTopInnerLeft]}>
+      <View style={[GameStyles.wrapper]}>
+        <View style={[GameStyles.panel, GameStyles.panelTop]}>
+          <View style={[GameStyles.side, GameStyles.sideChoose]}>
             {this.renderChooses()}
           </View>
-          {/* END: Chooses */}
 
-          {/* BEGIN: Hints */}
-          <View style={[GameStyles.sideTopInner, GameStyles.sideTopInnerRight]}>
-            {this.renderHints()}
+          <View style={[GameStyles.side, GameStyles.sideHint]}>
+            {/* {this.renderHints()} */}
           </View>
-          {/* END: Hints */}
         </View>
-        {/* END: Sidenav top */}
 
-        {/* BEGIN: Sidenav center */}
-        <View style={[GameStyles.side, GameStyles.sideCenter]}>
-        </View>
-        {/* END: Sidenav center */}
+        <View style={[GameStyles.panel, GameStyles.panelCenter]}>
+          <View style={[GameStyles.side, GameStyles.sideAnswer]}>
+            {/* {this.renderAnswer()} */}
+          </View>
 
-        {/* BEGIN: Sidenav bottom */}
-        <View style={[GameStyles.side, GameStyles.sideBottom]}>
-          {this.renderChoices()}
+          <View style={[GameStyles.side, GameStyles.sideScore]}>
+            {/* {this.renderScore()} */}
+          </View>
         </View>
-        {/* END: Sidenav bottom */}
+
+        <View style={[GameStyles.panel, GameStyles.panelBottom]}>
+          <View style={[GameStyles.side, GameStyles.sideChoice]}>
+            {this.renderChoices()}
+          </View>
+        </View>
       </View>
-      // END: Container
     );
   }
 }

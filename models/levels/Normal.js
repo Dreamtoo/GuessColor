@@ -1,4 +1,4 @@
-const KEYS_LENGTH = 6;
+const KEYS_LENGTH = 7;
 
 export default class Normal {
     constructor(mode) {
@@ -6,7 +6,7 @@ export default class Normal {
         this.EXTRA = 20;
 
         this.level = mode;
-        this.key = (new Array(mode)).map(u => {
+        this.keys = (new Array(mode)).map(u => {
             return Math.floor(Math.random() * KEYS_LENGTH);
         });
         this.cycleTrue = 0;
@@ -14,18 +14,18 @@ export default class Normal {
     }
 
     checkAnswer(guess) {
-        let itTrue = 0;
+        let passed = 0;
 
         for (let i = 0; i < this.level; i++) {
-            if (guess[i] === this.key[i]) {
-                itTrue += 1;
+            if (guess[i] === this.keys[i]) {
+                passed += 1;
             }
         }
 
-        this.cycleTrue = itTrue;
+        this.cycleTrue = passed;
         this.rewardTrue += this.cycleTrue;
 
-        return itTrue === this.level;
+        return passed === this.level;
     }
 
     getScore(cycle) {

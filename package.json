@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
+    "inspector": "adb reverse tcp:8097 tcp:8097",
     "reload": "adb shell input text 'RR'",
     "start": "node node_modules/react-native/local-cli/cli.js start",
     "test": "jest"
